@@ -39,7 +39,10 @@ int main()
 		
 		int* solution = memoize(problems[i], denoms, numDenoms);
 
-		int* solution = recursive(problems[i], denoms, numDenoms);
+		if (problems[i] < 20)
+		{
+			int* solution = recursive(problems[i], denoms, numDenoms);
+		}
 	}
 
 
