@@ -7,25 +7,26 @@
 
 class CoinPurse
 {
-public:
-	int count;
-	int* denoms;
-	CoinPurse()
-	{
-		count = -1;
-		denoms = NULL;
-	}
-	CoinPurse(int numDenoms)
-	{
-		count = -1;
-		denoms = new int[numDenoms];
-	}
+	public:
+		int count;
+		int* denoms;
+		CoinPurse()
+		{
+			count = -1;
+			denoms = NULL;
+		}
+		CoinPurse(int numDenoms)
+		{
+			count = -1;
+			denoms = new int[numDenoms];
+		}
 };
 
 int* recursive(int problem, int* denoms, int numDenoms)
 {
 	int* remainders = new int[numDenoms];
 	int* solution = new int[numDenoms];
+	for (int i = 0; i < numDenoms; i++) solution[i] = NULL;
 
 	for (int i = 0; i < numDenoms; i++)
 	{
@@ -35,7 +36,7 @@ int* recursive(int problem, int* denoms, int numDenoms)
 
 		if (solution[0] == NULL || new_solution[0] < solution[0])
 		{
-			delete solution;
+			delete[] solution;
 			solution = new_solution;
 		}
 	}
@@ -75,7 +76,7 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 			new_solution = memoize(remainders[i], denoms, numDenoms, subps);
 		}
 
-		new_solution.denoms[i]++;
+		new_solution.denoms[i]++; // EXCEPTION HERE - ACCESS VIOLATION WHEN READING //
 
 		if (solution.count == -1 || new_solution.count < solution.count)
 		{
@@ -84,7 +85,7 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 	}
 
 	solution.count++;
-	subps[problem] = solution;
+	subps[problem-1] = solution;
 
 	return solution;
 }
@@ -123,13 +124,20 @@ int main()
 	// Determine combinations for all problems
 	for (int i = 0; i < numProblems; i++)
 	{
-		CoinPurse bupSolution = bottomUp(problems[i], denoms, numDenoms);
+		CoinPurse solution = bottomUp(problems[i], denoms, numDenoms);
 		
-		CoinPurse memoSolution = memoize(problems[i], denoms, numDenoms);
+		// CoinPurse solution = memoize(problems[i], denoms, numDenoms);
 
-		if (problems[i] < 20)
+		// int* solution = recursive(problems[i], denoms, numDenoms);
+		
+		for (int j = 0; j < numDenoms; j++)
 		{
-			int* recurseSolution = recursive(problems[i], denoms, numDenoms);
+			cout << problems[i] 
+				<< " cents  = " 
+				<< denoms[j] 
+				<< ":" 
+				<< solution.denoms[j] 
+				<< endl;
 		}
 	}
 
