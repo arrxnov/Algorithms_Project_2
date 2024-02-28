@@ -22,22 +22,6 @@ public:
 	}
 };
 
-CoinPurse bottomUp(int problem, int* denoms, int numDenoms, CoinPurse* subps = NULL)
-{
-	// Since bottomUp is doing the same work as memoize, and 
-	// the answers are guaranteed to be pre-computed with 
-	// bottomUp, we can use the already-written code in memoize
-	// to do the compoutational work for us with only a non-
-	// standard for loop.
-
-	CoinPurse finalSolution = CoinPurse(numDenoms);
-	for (int i = 1; i <= problem; i++)
-	{
-		finalSolution = memoize(i, denoms, numDenoms, subps);
-	}
-	return finalSolution;
-}
-
 int* recursive(int problem, int* denoms, int numDenoms)
 {
 	int* remainders = new int[numDenoms];
@@ -105,6 +89,22 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 	return solution;
 }
 
+CoinPurse bottomUp(int problem, int* denoms, int numDenoms, CoinPurse* subps = NULL)
+{
+	// Since bottomUp is doing the same work as memoize, and 
+	// the answers are guaranteed to be pre-computed with 
+	// bottomUp, we can use the already-written code in memoize
+	// to do the compoutational work for us with only a non-
+	// standard for loop.
+
+	CoinPurse finalSolution = CoinPurse(numDenoms);
+	for (int i = 1; i <= problem; i++)
+	{
+		finalSolution = memoize(i, denoms, numDenoms, subps);
+	}
+	return finalSolution;
+}
+
 int main()
 {
 	using namespace std;
@@ -123,13 +123,13 @@ int main()
 	// Determine combinations for all problems
 	for (int i = 0; i < numProblems; i++)
 	{
-		CoinPurse solution = bottomUp(problems[i], denoms, numDenoms);
+		CoinPurse bupSolution = bottomUp(problems[i], denoms, numDenoms);
 		
-		CoinPurse solution = memoize(problems[i], denoms, numDenoms);
+		CoinPurse memoSolution = memoize(problems[i], denoms, numDenoms);
 
 		if (problems[i] < 20)
 		{
-			int* solution = recursive(problems[i], denoms, numDenoms);
+			int* recurseSolution = recursive(problems[i], denoms, numDenoms);
 		}
 	}
 
