@@ -51,6 +51,8 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 	
 	// Fill in results from a subtraction with every denomination
 	int* remainders = new int[numDenoms];
+	bool responsibility = false;
+
 	for (int i = 0; i < numDenoms; i++)
 	{
 		remainders[i] = problem - denoms[i];
@@ -64,6 +66,7 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 		{
 			subps[j] = CoinPurse(numDenoms);
 		}
+		responsibility = true;
 	}
 
 	CoinPurse current_solution = CoinPurse(numDenoms);
@@ -87,7 +90,11 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 
 		if (subps[remainders[i] - 1].count != 0)
 		{
-			solution = subps[remainders[i] - 1];
+			for (int k = 0; k < numDenoms; k++)
+			{
+				solution.denoms[k] = subps[problem - 1].denoms[k];
+			}
+			solution.count = subps[problem - 1].count;
 			delete[] remainders;
 			return;
 		}
@@ -106,8 +113,9 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 	}
 
 	solution = current_solution;
-	subps[problem-1] = solution;
+	subps[problem - 1] = solution;
 	delete[] remainders;
+	if (responsibility) delete[] subps;
 }
 
 void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution, CoinPurse* subps = NULL)
@@ -118,10 +126,22 @@ void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution,
 	// to do the computational work for us with only a non-
 	// standard for loop.
 
+	// Initialize our lookup table
+	if (subps == NULL)
+	{
+		subps = new CoinPurse[problem];
+		for (int j = 0; j < problem; j++)
+		{
+			subps[j] = CoinPurse(numDenoms);
+		}
+	}
+
 	for (int i = 1; i <= problem; i++)
 	{
 		memoize(i, denoms, numDenoms, finalSolution, subps);
 	}
+
+	delete[] subps;
 }
 
 int main()
@@ -143,9 +163,9 @@ int main()
 	for (int i = 0; i < numProblems; i++)
 	{
 		CoinPurse solution = CoinPurse(numDenoms);
-		bottomUp(problems[i], denoms, numDenoms, solution);
+		// bottomUp(problems[i], denoms, numDenoms, solution);
 		
-		// CoinPurse solution = memoize(problems[i], denoms, numDenoms);
+		memoize(problems[i], denoms, numDenoms, solution);
 
 		// int* solution = recursive(problems[i], denoms, numDenoms, solution);
 		
