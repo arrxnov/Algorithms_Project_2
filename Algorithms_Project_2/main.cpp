@@ -62,11 +62,13 @@ void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
 
 		if (current_solution.count == 0 || new_solution.count < current_solution.count)
 		{
-			current_solution = new_solution;
+			current_solution.count = new_solution.count;
+			for (int j = 0; j < numDenoms; j++) current_solution.denoms[j] = new_solution.denoms[j];
 		}
 	}
 
-	solution = current_solution;
+	solution.count = current_solution.count;
+	for (int i = 0; i < numDenoms; i++) solution.denoms[i] = current_solution.denoms[i];
 
 	delete[] remainders;
 }
@@ -74,15 +76,8 @@ void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
 void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinPurse* subps = NULL)
 {
 	using namespace std;
-	
-	// Fill in results from a subtraction with every denomination
-	int* remainders = new int[numDenoms];
 	bool responsibility = false;
-	for (int i = numDenoms - 1; i >= 0; i--)
-	{
-		remainders[i] = problem - denoms[i];
-	}
-	
+
 	// Initialize our lookup table
 	if (subps == NULL)
 	{
@@ -92,6 +87,25 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 			subps[j] = CoinPurse(numDenoms);
 		}
 		responsibility = true;
+	}
+	
+	// If we find our remainder in the table, return it
+	if (subps[problem - 1].count != 0)
+	{
+		for (int j = 0; j < numDenoms; j++)
+		{
+			solution.denoms[j] = subps[problem - 1].denoms[j];
+		}
+		solution.count = subps[problem - 1].count;
+		return;
+	}
+
+	// Fill in results from a subtraction with every denomination
+	int* remainders = new int[numDenoms];
+
+	for (int i = numDenoms - 1; i >= 0; i--)
+	{
+		remainders[i] = problem - denoms[i];
 	}
 
 	CoinPurse current_solution = CoinPurse(numDenoms);
@@ -117,18 +131,6 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 			return;
 		}
 
-		// If we find our remainder in the table, return it, adding the coin we used
-		if (subps[remainders[i] - 1].count != 0)
-		{
-			for (int k = 0; k < numDenoms; k++)
-			{
-				solution.denoms[k] = subps[remainders[i] - 1].denoms[k];
-			}
-			solution.count = subps[remainders[i] - 1].count + 1;
-			solution.denoms[i]++;
-			return;
-		}
-
 		CoinPurse new_solution = CoinPurse(numDenoms);
 		memoize(remainders[i], denoms, numDenoms, new_solution, subps);
 		
@@ -137,11 +139,16 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 
 		if (current_solution.count == 0 || new_solution.count < current_solution.count)
 		{
-			current_solution = new_solution;
+			current_solution.count = new_solution.count;
+			for (int j = 0; j < numDenoms; j++) current_solution.denoms[j] = new_solution.denoms[j];
 		}
 	}
 
-	solution = current_solution;
+	solution.count = current_solution.count;
+	for (int i = 0; i < numDenoms; i++)
+	{
+		solution.denoms[i] = current_solution.denoms[i];
+	}
 	subps[problem - 1].count = solution.count;
 	for (int i = 0; i < numDenoms; i++)
 	{
@@ -205,15 +212,16 @@ int main()
 	for (int i = 0; i < numProblems; i++)
 	{
 		CoinPurse solution = CoinPurse(numDenoms);
-		// bottomUp(problems[i], denoms, numDenoms, solution);
+		bottomUp(problems[i], denoms, numDenoms, solution);
 
-		memoize(problems[i], denoms, numDenoms, solution);
+		// memoize(problems[i], denoms, numDenoms, solution);
 
 		// recursive(problems[i], denoms, numDenoms, solution);
 
 		cout << problems[i]
 			<< " cents = ";
 		bool putaspacewherethereshouldntbeonemaybe = false;
+		int count = 0;
 		for (int j = numDenoms - 1; j >= 0; j--)
 		{
 			if (solution.denoms[j] != 0)
@@ -221,11 +229,9 @@ int main()
 				cout << denoms[j]
 					<< ":"
 					<< solution.denoms[j];
-				putaspacewherethereshouldntbeonemaybe = true;
+				count += solution.denoms[j];
+				if (count < solution.count) cout << " ";
 			}
-			else putaspacewherethereshouldntbeonemaybe = false;
-			if (j == 0) putaspacewherethereshouldntbeonemaybe = false; // i dont even care how jank. formatting you cant even see https://www.youtube.com/watch?v=GD6qtc2_AQA
-			if (putaspacewherethereshouldntbeonemaybe) cout << " "; // screw this space in particular
 		}
 		cout << endl;
 	}
