@@ -1,10 +1,5 @@
 #include <iostream>
 
-//
-//	For all the solution functions, return an int array with
-//  [ <len of solution>, solution[0], solution[1] ... solution[n] ]
-//
-
 class CoinPurse
 {
 	public:
@@ -23,13 +18,17 @@ class CoinPurse
 		}
 };
 
-void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
+void recursive(
+	int problem,
+	int* denoms,
+	int numDenoms,
+	CoinPurse &solution
+)
 {
 	using namespace std;
 
 	// Fill in results from a subtraction with every denomination
 	int* remainders = new int[numDenoms];
-
 	for (int i = numDenoms - 1; i >= 0 ; i--)
 	{
 		remainders[i] = problem - denoms[i];
@@ -39,6 +38,7 @@ void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
 
 	for (int i = numDenoms - 1; i >= 0; i--)
 	{
+		// Skip negative results
 		if (remainders[i] < 0)
 		{
 			continue;
@@ -60,20 +60,34 @@ void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
 		new_solution.denoms[i]++;
 		new_solution.count++;
 
-		if (current_solution.count == 0 || new_solution.count < current_solution.count)
+		// Find smallest coin count of the different denomination subtractions
+		if (current_solution.count == 0 
+			|| new_solution.count < current_solution.count)
 		{
 			current_solution.count = new_solution.count;
-			for (int j = 0; j < numDenoms; j++) current_solution.denoms[j] = new_solution.denoms[j];
+			for (int j = 0; j < numDenoms; j++)
+			{
+				current_solution.denoms[j] = new_solution.denoms[j];
+			}
 		}
 	}
 
 	solution.count = current_solution.count;
-	for (int i = 0; i < numDenoms; i++) solution.denoms[i] = current_solution.denoms[i];
+	for (int i = 0; i < numDenoms; i++)
+	{
+		solution.denoms[i] = current_solution.denoms[i];
+	}
 
 	delete[] remainders;
 }
 
-void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinPurse* subps = NULL)
+void memoize(
+	int problem,
+	int* denoms,
+	int numDenoms,
+	CoinPurse &solution,
+	CoinPurse* subps = NULL
+)
 {
 	using namespace std;
 	bool responsibility = false;
@@ -102,7 +116,6 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 
 	// Fill in results from a subtraction with every denomination
 	int* remainders = new int[numDenoms];
-
 	for (int i = numDenoms - 1; i >= 0; i--)
 	{
 		remainders[i] = problem - denoms[i];
@@ -137,10 +150,14 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 		new_solution.denoms[i]++;
 		new_solution.count++;
 
-		if (current_solution.count == 0 || new_solution.count < current_solution.count)
+		if (current_solution.count == 0 
+			|| new_solution.count < current_solution.count)
 		{
 			current_solution.count = new_solution.count;
-			for (int j = 0; j < numDenoms; j++) current_solution.denoms[j] = new_solution.denoms[j];
+			for (int j = 0; j < numDenoms; j++)
+			{
+				current_solution.denoms[j] = new_solution.denoms[j];
+			}
 		}
 	}
 
@@ -162,7 +179,13 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 	}
 }
 
-void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution, CoinPurse* subps = NULL)
+void bottomUp(
+	int problem,
+	int* denoms,
+	int numDenoms,
+	CoinPurse &finalSolution,
+	CoinPurse* subps = NULL
+)
 {
 	// Since bottomUp is doing the same work as memoize, and 
 	// the answers are guaranteed to be pre-computed with 
@@ -220,7 +243,6 @@ int main()
 
 		cout << problems[i]
 			<< " cents = ";
-		bool putaspacewherethereshouldntbeonemaybe = false;
 		int count = 0;
 		for (int j = numDenoms - 1; j >= 0; j--)
 		{
