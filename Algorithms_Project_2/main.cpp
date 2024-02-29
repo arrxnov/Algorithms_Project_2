@@ -44,10 +44,9 @@ int* recursive(int problem, int* denoms, int numDenoms)
 	return solution;
 }
 
-CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NULL)
+void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinPurse* subps = NULL)
 {
 	int* remainders = new int[numDenoms];
-	CoinPurse solution = CoinPurse(numDenoms);
 
 	for (int i = 0; i < numDenoms; i++)
 	{
@@ -56,6 +55,18 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 
 	for (int i = 0; i < numDenoms; i++)
 	{
+		if (remainders[i] < 0) continue;
+		
+		// If we just found the solution return it. 
+		if (remainders[i] == 0)
+		{
+			solution.denoms[i]++;
+			solution.count++;
+			subps[problem - 1] = solution;
+			return;
+		}
+
+		// Initialize our lookup table
 		if (subps == NULL)
 		{
 			subps = new CoinPurse[problem];
@@ -65,18 +76,18 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 			}
 		}
 
-		CoinPurse new_solution = CoinPurse(numDenoms);
+		CoinPurse new_solution = solution;
 
-		if (subps[remainders[i]].count != -1)
+		if (subps[remainders[i] - 1].count != -1)
 		{
-			new_solution = subps[remainders[i]];
+			new_solution = subps[remainders[i] - 1];
 		}
 		else
 		{
-			new_solution = memoize(remainders[i], denoms, numDenoms, subps);
+			memoize(remainders[i], denoms, numDenoms, new_solution, subps);
 		}
 
-		new_solution.denoms[i]++; // EXCEPTION HERE - ACCESS VIOLATION WHEN READING //
+		new_solution.denoms[i] = new_solution.denoms[i] + 1;
 
 		if (solution.count == -1 || new_solution.count < solution.count)
 		{
@@ -87,10 +98,10 @@ CoinPurse memoize(int problem, int* denoms, int numDenoms, CoinPurse* subps = NU
 	solution.count++;
 	subps[problem-1] = solution;
 
-	return solution;
+	return;
 }
 
-CoinPurse bottomUp(int problem, int* denoms, int numDenoms, CoinPurse* subps = NULL)
+void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution, CoinPurse* subps = NULL)
 {
 	// Since bottomUp is doing the same work as memoize, and 
 	// the answers are guaranteed to be pre-computed with 
@@ -98,12 +109,10 @@ CoinPurse bottomUp(int problem, int* denoms, int numDenoms, CoinPurse* subps = N
 	// to do the compoutational work for us with only a non-
 	// standard for loop.
 
-	CoinPurse finalSolution = CoinPurse(numDenoms);
 	for (int i = 1; i <= problem; i++)
 	{
-		finalSolution = memoize(i, denoms, numDenoms, subps);
+		memoize(i, denoms, numDenoms, finalSolution, subps);
 	}
-	return finalSolution;
 }
 
 int main()
@@ -124,20 +133,24 @@ int main()
 	// Determine combinations for all problems
 	for (int i = 0; i < numProblems; i++)
 	{
-		CoinPurse solution = bottomUp(problems[i], denoms, numDenoms);
+		CoinPurse solution = CoinPurse(numDenoms);
+		bottomUp(problems[i], denoms, numDenoms, solution);
 		
 		// CoinPurse solution = memoize(problems[i], denoms, numDenoms);
 
-		// int* solution = recursive(problems[i], denoms, numDenoms);
+		// int* solution = recursive(problems[i], denoms, numDenoms, solution);
 		
-		for (int j = 0; j < numDenoms; j++)
+		for (int j = numDenoms - 1; j != 0; j++)
 		{
-			cout << problems[i] 
-				<< " cents  = " 
-				<< denoms[j] 
-				<< ":" 
-				<< solution.denoms[j] 
-				<< endl;
+			if (solution.denoms[j] != 0)
+			{
+				cout << problems[i]
+					<< " cents  = "
+					<< denoms[j]
+					<< ":"
+					<< solution.denoms[j]
+					<< endl;
+			}
 		}
 	}
 
