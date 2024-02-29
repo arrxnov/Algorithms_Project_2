@@ -151,7 +151,7 @@ void memoize(
 		new_solution.count++;
 
 		if (current_solution.count == 0 
-			|| new_solution.count < current_solution.count)
+			|| new_solution.count <= current_solution.count)
 		{
 			current_solution.count = new_solution.count;
 			for (int j = 0; j < numDenoms; j++)
@@ -235,9 +235,9 @@ int main()
 	for (int i = 0; i < numProblems; i++)
 	{
 		CoinPurse solution = CoinPurse(numDenoms);
-		bottomUp(problems[i], denoms, numDenoms, solution);
+		// bottomUp(problems[i], denoms, numDenoms, solution);
 
-		// memoize(problems[i], denoms, numDenoms, solution);
+		memoize(problems[i], denoms, numDenoms, solution);
 
 		// recursive(problems[i], denoms, numDenoms, solution);
 
