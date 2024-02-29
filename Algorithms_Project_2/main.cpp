@@ -12,7 +12,7 @@ class CoinPurse
 		int* denoms;
 		CoinPurse()
 		{
-			count = -1;
+			count = 0;
 			denoms = NULL;
 		}
 		CoinPurse(int numDenoms)
@@ -66,7 +66,7 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 		}
 	}
 
-	CoinPurse current_solution = solution;
+	CoinPurse current_solution = CoinPurse(numDenoms);
 
 	for (int i = 0; i < numDenoms; i++)
 	{
@@ -81,16 +81,18 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 			solution.denoms[i]++;
 			solution.count++;
 			subps[problem - 1] = solution;
+			delete[] remainders;
 			return;
 		}
-
-		CoinPurse new_solution = solution;
 
 		if (subps[remainders[i] - 1].count != 0)
 		{
 			solution = subps[remainders[i] - 1];
+			delete[] remainders;
 			return;
 		}
+
+		CoinPurse new_solution = CoinPurse(numDenoms);
 		
 		memoize(remainders[i], denoms, numDenoms, new_solution, subps);
 		
@@ -105,6 +107,7 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 
 	solution = current_solution;
 	subps[problem-1] = solution;
+	delete[] remainders;
 }
 
 void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution, CoinPurse* subps = NULL)
@@ -149,7 +152,7 @@ int main()
 		cout << problems[i]
 			<< " cents = ";
 
-		for (int j = numDenoms - 1; j != 0; j--)
+		for (int j = numDenoms - 1; j >= 0; j--)
 		{
 			if (solution.denoms[j] != 0)
 			{
@@ -161,6 +164,8 @@ int main()
 		}
 		cout << endl;
 	}
+	delete[] denoms;
+	delete[] problems;
 
 	return 0;
 }
