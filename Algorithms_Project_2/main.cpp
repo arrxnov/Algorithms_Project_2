@@ -23,26 +23,52 @@ class CoinPurse
 		}
 };
 
-int* recursive(int problem, int* denoms, int numDenoms)
+void recursive(int problem, int* denoms, int numDenoms, CoinPurse &solution)
 {
-	int* remainders = new int[numDenoms];
-	int* solution = new int[numDenoms];
-	for (int i = 0; i < numDenoms; i++) solution[i] = NULL;
+	using namespace std;
 
-	for (int i = 0; i < numDenoms; i++)
+	// Fill in results from a subtraction with every denomination
+	int* remainders = new int[numDenoms];
+
+	for (int i = numDenoms - 1; i >= 0 ; i--)
 	{
 		remainders[i] = problem - denoms[i];
-		int* new_solution = new int[numDenoms];
-		new_solution = recursive(problem, denoms, numDenoms);
+	}
 
-		if (solution[0] == NULL || new_solution[0] < solution[0])
+	CoinPurse current_solution = CoinPurse(numDenoms);
+
+	for (int i = numDenoms - 1; i >= 0; i--)
+	{
+		if (remainders[i] < 0)
 		{
-			delete[] solution;
-			solution = new_solution;
+			continue;
+		}
+
+		// If we just found the solution return it. 
+		if (remainders[i] == 0)
+		{
+			solution.denoms[i]++;
+			solution.count++;
+			delete[] remainders;
+			return;
+		}
+
+		CoinPurse new_solution = CoinPurse(numDenoms);
+
+		recursive(remainders[i], denoms, numDenoms, new_solution);
+
+		new_solution.denoms[i]++;
+		new_solution.count++;
+
+		if (current_solution.count == 0 || new_solution.count < current_solution.count)
+		{
+			current_solution = new_solution;
 		}
 	}
 
-	return solution;
+	solution = current_solution;
+
+	delete[] remainders;
 }
 
 void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinPurse* subps = NULL)
@@ -52,8 +78,7 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 	// Fill in results from a subtraction with every denomination
 	int* remainders = new int[numDenoms];
 	bool responsibility = false;
-
-	for (int i = 0; i < numDenoms; i++)
+	for (int i = numDenoms - 1; i >= 0; i--)
 	{
 		remainders[i] = problem - denoms[i];
 	}
@@ -71,11 +96,11 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 
 	CoinPurse current_solution = CoinPurse(numDenoms);
 
-	for (int i = 0; i < numDenoms; i++)
+	for (int i = numDenoms - 1; i >= 0; i--)
 	{
 		if (remainders[i] < 0)
 		{
-			break;
+			continue;
 		}
 		
 		// If we just found the solution return it. 
@@ -83,24 +108,28 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 		{
 			solution.denoms[i]++;
 			solution.count++;
-			subps[problem - 1] = solution;
+			subps[problem - 1].count = solution.count;
+			for (int j = 0; j < numDenoms; j++)
+			{
+				subps[problem - 1].denoms[j] = solution.denoms[j];
+			}
 			delete[] remainders;
 			return;
 		}
 
+		// If we find our remainder in the table, return it, adding the coin we used
 		if (subps[remainders[i] - 1].count != 0)
 		{
 			for (int k = 0; k < numDenoms; k++)
 			{
-				solution.denoms[k] = subps[problem - 1].denoms[k];
+				solution.denoms[k] = subps[remainders[i] - 1].denoms[k];
 			}
-			solution.count = subps[problem - 1].count;
-			delete[] remainders;
+			solution.count = subps[remainders[i] - 1].count + 1;
+			solution.denoms[i]++;
 			return;
 		}
 
 		CoinPurse new_solution = CoinPurse(numDenoms);
-		
 		memoize(remainders[i], denoms, numDenoms, new_solution, subps);
 		
 		new_solution.denoms[i]++;
@@ -113,9 +142,17 @@ void memoize(int problem, int* denoms, int numDenoms, CoinPurse &solution, CoinP
 	}
 
 	solution = current_solution;
-	subps[problem - 1] = solution;
+	subps[problem - 1].count = solution.count;
+	for (int i = 0; i < numDenoms; i++)
+	{
+		subps[problem - 1].denoms[i] = solution.denoms[i];
+	}
+
 	delete[] remainders;
-	if (responsibility) delete[] subps;
+	if (responsibility)
+	{
+		delete[] subps;
+	}
 }
 
 void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution, CoinPurse* subps = NULL)
@@ -136,19 +173,24 @@ void bottomUp(int problem, int* denoms, int numDenoms, CoinPurse &finalSolution,
 		}
 	}
 
+	CoinPurse tempSolution = CoinPurse(numDenoms);
+
 	for (int i = 1; i <= problem; i++)
 	{
-		memoize(i, denoms, numDenoms, finalSolution, subps);
+		tempSolution = CoinPurse(numDenoms);
+		unsigned int currentBest = -1;
+		memoize(i, denoms, numDenoms, tempSolution, subps);
 	}
-
+	finalSolution = tempSolution;
 	delete[] subps;
 }
 
 int main()
 {
 	using namespace std;
+
 	int numDenoms, numProblems;
-	
+
 	// Read in all coin denominations (smallest to largest)
 	cin >> numDenoms;
 	int* denoms = new int[numDenoms];
@@ -164,26 +206,30 @@ int main()
 	{
 		CoinPurse solution = CoinPurse(numDenoms);
 		// bottomUp(problems[i], denoms, numDenoms, solution);
-		
+
 		memoize(problems[i], denoms, numDenoms, solution);
 
-		// int* solution = recursive(problems[i], denoms, numDenoms, solution);
-		
+		// recursive(problems[i], denoms, numDenoms, solution);
+
 		cout << problems[i]
 			<< " cents = ";
-
+		bool putaspacewherethereshouldntbeonemaybe = false;
 		for (int j = numDenoms - 1; j >= 0; j--)
 		{
 			if (solution.denoms[j] != 0)
 			{
 				cout << denoms[j]
 					<< ":"
-					<< solution.denoms[j]
-					<< " ";
+					<< solution.denoms[j];
+				putaspacewherethereshouldntbeonemaybe = true;
 			}
+			else putaspacewherethereshouldntbeonemaybe = false;
+			if (j == 0) putaspacewherethereshouldntbeonemaybe = false; // i dont even care how jank. formatting you cant even see https://www.youtube.com/watch?v=GD6qtc2_AQA
+			if (putaspacewherethereshouldntbeonemaybe) cout << " "; // screw this space in particular
 		}
 		cout << endl;
 	}
+
 	delete[] denoms;
 	delete[] problems;
 
